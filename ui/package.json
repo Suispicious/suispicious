@@ -12,14 +12,17 @@
     "react-dom": "^19.1.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4",
-    "gh-pages": "^6.1.1"
+    "gh-pages": "^6.1.1",
+    "@mysten/sui.js": "^0.26.1",
+    "bignumber.js": "^9.1.0",
+    "browserify": "^17.0.0",
+    "ethos-connect": "^0.0.100",
+    "static-server": "^2.2.1"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "predeploy": "npm run build",
+    "build": "mkdir -p build && npx browserify js/* > build/index.js",
+    "start": "yarn && yarn build && npx browser-sync start --server",
+    "predeploy": "yarn build",
     "deploy": "gh-pages -d build"
   },
   "eslintConfig": {

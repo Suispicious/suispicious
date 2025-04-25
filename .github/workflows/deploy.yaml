@@ -1,0 +1,31 @@
+name: Deploy SUI Move Package
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install SUI CLI
+        run: |
+          curl -fsSL https://github.com/MystenLabs/sui/releases/latest/download/sui-cli-linux-x64 -o sui
+          chmod +x sui
+          sudo mv sui /usr/local/bin/
+
+      - name: Build Move package
+        run: sui move build
+
+      - name: Deploy Move package
+        env:
+          SUI_PRIVATE: ${{ secrets.SUI_PRIVATE }}
+        run: |
+          sui keytool import --alias "cicd" "${SUI_PRIVATE}" ed25519
+          sui client switch --env testnet
+          sui client gas

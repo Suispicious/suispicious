@@ -7,6 +7,7 @@ use sui::{
     transfer,
 };
 use std::vector;
+use sui::transfer::Receiving;
 
 // Piece type constants
 const EMPTY: u8 = 0;
@@ -106,7 +107,7 @@ public fun new(white: address, black: address, ctx: &mut TxContext): Game {
 
 // The player calls this function to send their move
 public fun send_move(
-    turn_cap: TurnCap,
+    cap: TurnCap,
     from_square: u8,
     to_square: u8,
     move_type: u8,
@@ -114,7 +115,8 @@ public fun send_move(
     ctx: &mut TxContext
 ) {
     assert!(from_square < 64 && to_square < 64, EInvalidSquare);
-    let TurnCap { id, game } = turn_cap;
+    let TurnCap { id, game } = cap;
+    id.delete();
 
     let chess_move = Move {
         id: object::new(ctx),
@@ -133,7 +135,6 @@ public fun send_move(
     // The admin service will handle transferring the move to the game object
     transfer::transfer(chess_move, tx_context::sender(ctx));
     // Destroy the turn capability to prevent multiple moves
-    object::delete(id);
 }
 
 /// Check if the game has ended (checkmate, stalemate, etc.)
@@ -150,27 +151,32 @@ public fun check_game_end(game: &Game, captured_piece: u8): bool {
     false
 }
 
-// The admin service will handle placing the move on the board
+
+/// Called by the admin (who owns the `Game`), to commit a player's
+/// intention to make a move. If the game should continue, a new `TurnCap` is
+/// sent to the player who should make the next move.
 public fun place_move(
     game: &mut Game,
-    chess_move: Move,
-    turn_cap: &mut TurnCap,
+    chess_move: Receiving<Move>,
     ctx: &mut TxContext
 ) {
     assert!(!game.is_ended, EGameAlreadyEnded);
-    assert!(object::id(game) == turn_cap.game, ENotPlayerTurn);
-    let current_player = if (game.turn == 0) game.white else game.black;
-    assert!(chess_move.player == current_player, ENotPlayerTurn);
 
-    let piece = *vector::borrow(&game.board, (chess_move.from_square as u64));
+    let Move { id, from_square, to_square, player, move_type, promotion_piece } = transfer::receive(&mut game.id, chess_move);
+    id.delete();
+
+    let (me, them) = game.next_player(game.turn);
+    assert!(player == me, ENotPlayerTurn);
+
+    let piece = *vector::borrow(&game.board, (from_square as u64));
     assert!(piece != EMPTY, ENoPieceAtSquare);
 
     // Get the piece at the destination square (if any)
-    let captured_piece = *vector::borrow(&game.board, (chess_move.to_square as u64));
+    let captured_piece = *vector::borrow(&game.board, (to_square as u64));
 
     // Simply move the piece from source to destination
-    *vector::borrow_mut(&mut game.board, (chess_move.from_square as u64)) = EMPTY;
-    *vector::borrow_mut(&mut game.board, (chess_move.to_square as u64)) = piece;
+    *vector::borrow_mut(&mut game.board, (from_square as u64)) = EMPTY;
+    *vector::borrow_mut(&mut game.board, (to_square as u64)) = piece;
 
     // Check if the game has ended
     if (check_game_end(game, captured_piece)) {
@@ -178,17 +184,23 @@ public fun place_move(
         // Emit game end event with the winner (current player who made the winning move)
         event::emit(GameEnd {
             game: object::id(game),
-            winner: chess_move.player,
+            winner: player,
         });
         // Don't transfer turn capability if game is over
-        object::delete(turn_cap);
         return
     };
 
-    // Transfer turn capability to the next player
-    let next_player = if (game.turn == 0) game.black else game.white;
-    transfer::transfer(turn_cap, next_player);
-    game.turn = if (game.turn == 0) 1 else 0;
+    // Update the turn
+    game.turn = game.turn + 1;
+    let cap = TurnCap { id: object::new(ctx), game: object::id(game) };
+    transfer::transfer(cap, them);
 }
 
 
+fun next_player(game: &Game, turn_number: u8): (address, address) {
+    if (turn_number % 2 == 0) {
+        (game.black, game.white)
+    } else {
+        (game.white, game.black)
+    }
+}

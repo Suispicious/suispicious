@@ -1,4 +1,4 @@
-module chess::owned;
+module chess::chess;
 
 use sui::{
     event,
@@ -77,7 +77,7 @@ public struct GameEnd has copy, drop {
     winner: address,
 }
 
-public fun new(white: address, black: address, ctx: &mut TxContext): Game {
+public fun new(white: address, black: address, ctx: &mut TxContext) {
     let game = Game {
         id: object::new(ctx),
         board: vector[
@@ -102,7 +102,7 @@ public fun new(white: address, black: address, ctx: &mut TxContext): Game {
     };
 
     transfer::transfer(turn, white);
-    game
+    transfer::transfer(game, tx_context::sender(ctx));
 }
 
 // The player calls this function to send their move

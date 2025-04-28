@@ -32,15 +32,30 @@ public struct Move has key, store {
     promotion_piece: u8,
 }
 
+public struct TurnCap has key, store {
+    id: UID,
+    game: ID,
+}
+
 public fun new(white: address, black: address, ctx: &mut TxContext): Game {
-    Game {
+    let game = Game {
         id: object::new(ctx),
         fen: b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         white,
         black,
         is_ended: false,
         admin: ctx.sender(),
-    }
+    };
+
+    let turn_cap = TurnCap {
+        id: object::new(ctx),
+        game: object::id(&game),
+    };
+
+    // Transfer the TurnCap to the white player as they start the game
+    transfer::transfer(turn_cap, white);
+
+    game
 }
 
 // The player calls this function to send their move

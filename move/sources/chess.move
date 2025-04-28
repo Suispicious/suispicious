@@ -33,16 +33,14 @@ public struct Move has key, store {
 }
 
 public fun new(white: address, black: address, ctx: &mut TxContext): Game {
-    let game = Game {
+    Game {
         id: object::new(ctx),
         fen: b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
         white,
         black,
         is_ended: false,
         admin: ctx.sender(),
-    };
-
-    game
+    }
 }
 
 // The player calls this function to send their move

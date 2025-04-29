@@ -32,7 +32,7 @@ public struct Move has key, store {
     promotion_piece: u8,
 }
 
-public fun new(white: address, black: address, ctx: &mut TxContext) {
+public fun new(white: address, black: address, ctx: &mut TxContext): Game {
     let game = Game {
         id: object::new(ctx),
         fen: b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
@@ -42,7 +42,7 @@ public fun new(white: address, black: address, ctx: &mut TxContext) {
         admin: ctx.sender(),
     };
 
-    transfer::transfer(game, ctx.sender());
+    game
 }
 
 // The player calls this function to send their move

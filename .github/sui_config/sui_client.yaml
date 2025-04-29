@@ -5,5 +5,9 @@ envs:
     rpc: "https://fullnode.testnet.sui.io:443"
     ws: ~
     basic_auth: ~
-active_env: testnet
+  - alias: devnet
+    rpc: "https://devnet.testnet.sui.io:443"
+    ws: ~
+    basic_auth: ~
+active_env: devnet
 active_address: "0x52b346e0aecefcf4b0f89b2ce26188b642ee673752869977361a28d36b6778f4"

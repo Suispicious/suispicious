@@ -5,6 +5,7 @@ use sui::{
 };
 
 const ENotFinished: u64 = 1;
+const ENotAuthorized: u64 = 2;
 
 // Event emitted when a move is submitted by a player
 public struct MoveSubmitted has copy, drop {
@@ -72,7 +73,8 @@ public fun send_move(
 }
 
 public fun burn(game: Game) {
-    assert!(game.is_ended, ENotFinished);
+    assert!(game.admin == ctx.sender(), ENotAuthorized);
+
     let Game { id, .. } = game;
     id.delete();
 }
@@ -81,8 +83,10 @@ public fun burn(game: Game) {
 public fun place_move(
     game: &mut Game,
     fen: vector<u8>,
-    _ctx: &mut TxContext
+    ctx: &mut TxContext
 ) {
+    assert!(game.admin == ctx.sender(), ENotAuthorized);
+
     game.fen = fen;
 }
 

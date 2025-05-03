@@ -73,8 +73,6 @@ public fun send_move(
 }
 
 public fun burn(game: Game) {
-    assert!(game.admin == ctx.sender(), ENotAuthorized);
-
     let Game { id, .. } = game;
     id.delete();
 }
@@ -83,10 +81,7 @@ public fun burn(game: Game) {
 public fun place_move(
     game: &mut Game,
     fen: vector<u8>,
-    ctx: &mut TxContext
 ) {
-    assert!(game.admin == ctx.sender(), ENotAuthorized);
-
     game.fen = fen;
 }
 

@@ -78,7 +78,7 @@ public fun test_place_move() {
 
     let new_fen = b"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 1 1"; // Example FEN after a move
 
-    chess::place_move(&mut game, new_fen, ts.ctx());
+    chess::place_move(&mut game, new_fen);
 
     assert!(chess::get_game_fen(&game) == new_fen, 1); // Verify the FEN was updated
 

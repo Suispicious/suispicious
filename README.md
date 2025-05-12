@@ -46,3 +46,38 @@ docker-compose down
 - `server/`: Go backend with Gin HTTP server
 - `ui/`: React frontend
 - `move/`: Move-related code
+
+## Player Matching and Staking Logic
+
+### Overview
+This project implements a blockchain-based chess game on the SUI platform. The game includes a player matching and staking mechanism to ensure fair play and commitment from both players.
+
+### Key Components
+1. **Matchmaker**: A singleton object that holds pending stakes and matches players.
+2. **Game**: Represents an active chess game between two players.
+3. **Staking**: Players deposit their stakes (SUI coins) into the Matchmaker before the game starts.
+
+### Workflow
+1. **Matchmaker Creation**:
+   - The admin creates a singleton `Matchmaker` object.
+   - This object holds pending stakes and matches players.
+
+2. **Player Joins**:
+   - Players call the `join_matchmaker` function to deposit their stakes into the `Matchmaker`.
+   - The `Matchmaker` stores the player's address and their stake.
+
+3. **Game Creation**:
+   - Once two players have joined, the admin calls `create_game_from_matchmaker` to create a new `Game` object.
+   - The stakes are transferred from the `Matchmaker` to the `Game`.
+
+4. **Game Progression**:
+   - Players make moves using the `send_move` function.
+   - The game state is updated accordingly.
+
+5. **Stake Distribution**:
+   - At the end of the game, the admin calls `distribute_stakes` to transfer the stakes to the winner.
+
+### Benefits
+- **Gas Efficiency**: Players only pay gas fees to join the `Matchmaker`, and the admin pays to create the game.
+- **Security**: Stakes are locked in the `Matchmaker` until the game starts.
+- **Fairness**: Both players must commit their stakes before the game begins.

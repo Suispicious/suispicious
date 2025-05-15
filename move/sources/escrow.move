@@ -3,7 +3,7 @@ module chess::escrow;
 use sui::coin::Coin;
 use sui::sui::SUI;
 
-public struct EscrowVault has key {
+public struct EscrowVault has key, store {
     id: UID,
     coins: vector<Coin<SUI>>,
 }

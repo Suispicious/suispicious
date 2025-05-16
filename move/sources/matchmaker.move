@@ -13,7 +13,7 @@ public struct Matchmaker has key, store {
     players: vector<address>,
 }
 
-public fun create_matchmaker(vault_id: ID, ctx: &mut TxContext): Matchmaker {
+public fun new(vault_id: ID, ctx: &mut TxContext): Matchmaker {
     Matchmaker {
         id: object::new(ctx),
         vault_id: vault_id,

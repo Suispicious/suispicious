@@ -1,4 +1,4 @@
-module chess::adminstorage {
+module chess::adminstorage;
 
 use sui::object::UID;
 use sui::object;

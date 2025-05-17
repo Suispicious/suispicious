@@ -49,5 +49,6 @@ public fun create_game_from_matchmaker(matchmaker: &mut Matchmaker, ctx: &mut Tx
 public fun burn(matchmaker: Matchmaker) {
     let Matchmaker { id, players, vault_id } = matchmaker;
     id.delete();
-    // players and vault_id are dropped here, but that's fine as they are not UID
+    let _players = players;
+    let _vault_id = vault_id;
 }

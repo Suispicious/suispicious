@@ -4,8 +4,6 @@ use sui::{
     event,
 };
 
-const ENotFinished: u64 = 1;
-const ENotAuthorized: u64 = 2;
 
 // Event emitted when a move is submitted by a player
 public struct MoveSubmitted has copy, drop {

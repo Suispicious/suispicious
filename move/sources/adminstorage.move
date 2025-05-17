@@ -1,11 +1,5 @@
 module chess::adminstorage;
 
-use sui::object::UID;
-use sui::object;
-use sui::tx_context::TxContext;
-use sui::object::ID;
-use std::option;
-
 public struct AdminStorage has key, store {
     id: UID,
     escrow_id: option::Option<ID>,

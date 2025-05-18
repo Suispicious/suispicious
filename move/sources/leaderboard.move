@@ -19,11 +19,11 @@ public fun new(ctx: &mut TxContext): Leaderboard {
     leaderboard
 }
 
-public fun increment_player_score(leaderboard: &mut Leaderboard, player: address, ctx: &mut TxContext) {
+public fun increment_player_score(leaderboard: &mut Leaderboard, player: address) {
   if (table::contains(&leaderboard.stats, player)) {
-    let _current_score = *table::borrow_mut(&mut leaderboard.stats, player);
-    table::borrow_mut(&mut leaderboard.stats, player) = _current_score + 1;
+    let current_score = table::borrow_mut(&mut leaderboard.stats, player);
+    *current_score = *current_score + 1;
   } else {
-    table::add(&mut leaderboard.stats, player, 1, ctx);
+    table::add(&mut leaderboard.stats, player, 1);
   }
 }

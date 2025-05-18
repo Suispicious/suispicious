@@ -26,14 +26,7 @@ const ENTRY_FEE: u64 = 100_000_000; // 0,1 SUI in MIST
 public fun join_matchmaker(matchmaker: &mut Matchmaker, vault: &mut EscrowVault, fee: Coin<SUI>, ctx: &mut TxContext) {
     assert!(matchmaker.vault_id == object::id(vault), 101); // Ensure vault matches matchmaker
     assert!(fee.value() == ENTRY_FEE, 100);
-    let sender: address = ctx.sender();
-    let len: u64 = vector::length<address>(&matchmaker.players);
-    let mut i: u64 = 0;
-    while (i < len) {
-        assert!(sender != *vector::borrow<address>(&matchmaker.players, i), 100);
-        i = i + 1;
-    };
-    vector::push_back<address>(&mut matchmaker.players, sender);
+    vector::push_back<address>(&mut matchmaker.players, ctx.sender());
 
     escrow::deposit(vault, fee)
 }

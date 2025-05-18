@@ -27,3 +27,43 @@ public fun increment_player_score(leaderboard: &mut Leaderboard, player: address
     table::add(&mut leaderboard.stats, player, 1);
   }
 }
+
+public fun burn(leaderboard: Leaderboard) {
+    let Leaderboard { id, stats } = leaderboard;
+    table::destroy_empty(stats);
+    id.delete();
+}
+
+#[test_only]
+public fun extract_id(leaderboard: Leaderboard): UID {
+    let Leaderboard { id, stats } = leaderboard;
+    table::destroy_empty(stats);
+    id
+}
+
+#[test_only]
+public fun get_player_score(leaderboard: &Leaderboard, player: address): u64 {
+    if (table::contains(&leaderboard.stats, player)) {
+        *table::borrow(&leaderboard.stats, player)
+    } else {
+        0
+    }
+}
+
+#[test_only]
+public fun get_num_players(leaderboard: &Leaderboard): u64 {
+    table::length(&leaderboard.stats)
+}
+
+#[test_only]
+public fun clear_leaderboard(leaderboard: &mut Leaderboard, players: vector<address>) {
+    let len = vector::length(&players);
+    let mut i = 0u64;
+    while (i < len) {
+        let player = *vector::borrow(&players, i);
+        if (table::contains(&leaderboard.stats, player)) {
+            table::remove(&mut leaderboard.stats, player);
+        };
+        i = i + 1;
+    }
+}

@@ -20,6 +20,7 @@ public fun new(ctx: &mut TxContext): Leaderboard {
 }
 
 public fun increment_player_score(leaderboard: &mut Leaderboard, player: address) {
+  // Increment the player's score in the leaderboard
   if (table::contains(&leaderboard.stats, player)) {
     let current_score = table::borrow_mut(&mut leaderboard.stats, player);
     *current_score = *current_score + 1;

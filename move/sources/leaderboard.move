@@ -8,6 +8,7 @@ public struct Leaderboard has key, store {
     id: UID,
     stats: table::Table<address, u64>, // Maps player addresses to their win counts
     top_player_ids: vector<address>, // List of top 10 player IDs
+    top_player_scores: vector<u64>, // List of top 10 player scores in the same order as top_player_ids
 }
 
 public fun new(ctx: &mut TxContext): Leaderboard {
@@ -16,23 +17,14 @@ public fun new(ctx: &mut TxContext): Leaderboard {
         id: object::new(ctx),
         stats: table::new<address, u64>(ctx),
         top_player_ids: vector::empty<(address)>(),
+        top_player_scores: vector::empty<(u64)>(),
     };
 
     leaderboard
 }
 
-public fun increment_player_score(leaderboard: &mut Leaderboard, player: address) {
-  // Increment the player's score in the leaderboard
-  if (table::contains(&leaderboard.stats, player)) {
-    let current_score = table::borrow_mut(&mut leaderboard.stats, player);
-    *current_score = *current_score + 1;
-  } else {
-    table::add(&mut leaderboard.stats, player, 1);
-  }
-}
-
 public fun increment_player_score_with_top_players(leaderboard: &mut Leaderboard, player: address) {
-    let _new_score = if (table::contains(&leaderboard.stats, player)) {
+    let new_score = if (table::contains(&leaderboard.stats, player)) {
         let current_score = table::borrow_mut(&mut leaderboard.stats, player);
         *current_score = *current_score + 1;
         *current_score
@@ -41,7 +33,7 @@ public fun increment_player_score_with_top_players(leaderboard: &mut Leaderboard
         1
     };
 
-    // Update the top_player_ids vector
+    // Update the top_player_ids and top_player_scores vectors
     let mut found = false;
     let len = vector::length(&leaderboard.top_player_ids);
     let mut i = 0u64;
@@ -50,6 +42,7 @@ public fun increment_player_score_with_top_players(leaderboard: &mut Leaderboard
         let top_player = *vector::borrow(&leaderboard.top_player_ids, i);
         if (top_player == player) {
             vector::swap_remove(&mut leaderboard.top_player_ids, i);
+            vector::swap_remove(&mut leaderboard.top_player_scores, i);
             found = true;
             break;
         };
@@ -58,29 +51,53 @@ public fun increment_player_score_with_top_players(leaderboard: &mut Leaderboard
 
     if (!found) {
         vector::push_back(&mut leaderboard.top_player_ids, player);
+        vector::push_back(&mut leaderboard.top_player_scores, new_score);
     };
 
-    // Sort the top_player_ids based on scores in descending order
+    // Sort the top_player_ids and top_player_scores based on scores in descending order
+    let mut indices = vector::empty<u64>();
     let len = vector::length(&leaderboard.top_player_ids);
     let mut i = 0u64;
     while (i < len) {
-        let mut j = 0u64;
-        while (j < len - 1) {
-            let a = *vector::borrow(&leaderboard.top_player_ids, j);
-            let b = *vector::borrow(&leaderboard.top_player_ids, j + 1);
-            let score_a = *table::borrow(&leaderboard.stats, a);
-            let score_b = *table::borrow(&leaderboard.stats, b);
-            if (score_a < score_b) {
-                vector::swap(&mut leaderboard.top_player_ids, j, j + 1);
+        vector::push_back(&mut indices, i);
+        i = i + 1;
+    };
+
+    let len = vector::length(&indices);
+    let mut i = 0u64;
+    while (i < len) {
+        let mut j = i + 1;
+        while (j < len) {
+            let index_a = *vector::borrow(&indices, i);
+            let index_b = *vector::borrow(&indices, j);
+            let score_a = *vector::borrow(&leaderboard.top_player_scores, index_a);
+            let score_b = *vector::borrow(&leaderboard.top_player_scores, index_b);
+            if (score_b > score_a) {
+                vector::swap(&mut indices, i, j);
             };
             j = j + 1;
         };
         i = i + 1;
     };
 
+    let mut sorted_ids = vector::empty<address>();
+    let mut sorted_scores = vector::empty<u64>();
+    let len = vector::length(&indices);
+    let mut i = 0u64;
+    while (i < len) {
+        let index = *vector::borrow(&indices, i);
+        vector::push_back(&mut sorted_ids, *vector::borrow(&leaderboard.top_player_ids, index));
+        vector::push_back(&mut sorted_scores, *vector::borrow(&leaderboard.top_player_scores, index));
+        i = i + 1;
+    };
+
+    leaderboard.top_player_ids = sorted_ids;
+    leaderboard.top_player_scores = sorted_scores;
+
     // Keep only the top 10 players
-    if (vector::length(&leaderboard.top_player_ids) > 10) {
+    while (vector::length(&leaderboard.top_player_ids) > 10) {
         vector::pop_back(&mut leaderboard.top_player_ids);
+        vector::pop_back(&mut leaderboard.top_player_scores);
     };
 }
 
@@ -89,15 +106,16 @@ public fun get_top_player_ids(leaderboard: &Leaderboard): vector<address> {
 }
 
 public fun burn(leaderboard: Leaderboard) {
-    let Leaderboard { id, stats, top_player_ids } = leaderboard;
+    let Leaderboard { id, stats, top_player_ids, top_player_scores } = leaderboard;
     table::destroy_empty(stats);
     id.delete();
     vector::destroy_empty(top_player_ids);
+    vector::destroy_empty(top_player_scores);
 }
 
 #[test_only]
 public fun extract_id(leaderboard: Leaderboard): UID {
-    let Leaderboard { id, stats, top_player_ids } = leaderboard;
+    let Leaderboard { id, stats, top_player_ids, top_player_scores } = leaderboard;
     table::destroy_empty(stats);
     id
 }
